@@ -58,6 +58,13 @@ out "This tool is ready to adjust your local master branch,"
 out "by doing a reset via 'git reset --hard origin/master'."
 prompt_to_continue
 git checkout master
+
+# check that no files are staged and exit if so
+if [ "$(git diff --staged | wc -c)" -gt 0 ]; then
+    err "This tool detected files in this repo that are staged for commit."
+    err "Please commit any changes and rerun this tool."
+    die "Abort."
+fi
 git reset --hard origin/master
 
 out "This tool is ready to rename the branch and push it."

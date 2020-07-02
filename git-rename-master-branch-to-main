@@ -32,7 +32,7 @@ die() { >&2 printf %s\\n "$*" ; exit 1 ; }
 prompt_to_continue() {
 	printf %s "Continue? (yes/no) "
 	read answer
-	if [ "$answer" == "${answer#[Yy]}" ]; then
+	if [ "$answer" = "${answer#[Yy]}" ]; then
 		die "Abort."
 	fi
 }

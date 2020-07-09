@@ -10,4 +10,9 @@ If you are a skilled git user, or if you have many repos and
 you want to automate changing them, then you edit this tool
 to remove prompts, or search the net for automation scripts.
 
+If you use GitHub, and you want to automatically rename branches,
+and you are skilled enough to create your GitHub personal access
+token and use it, then you may want to try this automation tool:
+[github-default-branch](https://www.npmjs.com/package/github-default-branch).
+
 Constructive feedback welcome.

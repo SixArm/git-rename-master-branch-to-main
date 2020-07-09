@@ -1,80 +1,135 @@
 #!/bin/sh
+#set -euf
 
-##
-# git-rename-master-branch-to-main
-#
-# This tool helps you use git to change your git repository
-# out "from the default branch name 'master' to a new name 'main'.
-#
-# This tool is intentionally step-by-step so it is suitable
-# for one-time use by people who may be less-familiar with git.
-#
-# If you are a skilled git user, or if you have many repos and
-# you want to automate changing them, then you edit this tool
-# to remove prompts, or search the net for automation scripts.
-#
-# Constructive feedback welcome.
-#
-# ## Tracking
-#
-# * Package: git-rename-master-branch-to-main
-# * Version: 1.1.0
-# * Created: 2020-06-28T05:13:28Z
-# * Updated: 2020-07-01T04:14:03Z
-# * License: GPL-2.0-only
-# * Contact: Joel Parker Henderson (joel@joelparkerhenderson.com)
-##
+## Program tracking ##
+
+program_command="git-rename-master-branch-to-main"
+program_version="1.2.0"
+program_created="2020-06-28T05:13:28Z"
+program_updated="2020-07-01T04:14:03Z"
+program_license="GPL-2.0-only"
+program_contact="Joel Parker Henderson (joel@joelparkerhenderson.com)"
+program_variant="$program_command version $program_version updated $program_updated"
+
+## Help
+
+help(){
+cat << CAT
+
+git-rename-master-branch-to-main
+
+Syntax:
+
+    git-rename-master-branch-to-main [options]
+
+This tool helps you use git to change your git repository
+from the default branch name 'master' to a new name 'main'.
+
+This tool is intentionally step-by-step, with user prompts,
+in order to be suitable for one-time use by people who may 
+be less-familiar with git, and who want to proceed carefully.
+
+If you are a skilled git user, or if you have many repos and
+you want to automate changing them, then you edit this tool
+to remove prompts, or search the net for automation scripts.
+
+Constructive feedback welcome.
+
+Options:
+
+  * -h --help: print program help
+
+  * -V --version: print program information
+
+Known issues:
+
+  * If the repository has no commits, then this tool doesn't 
+    detect the master branch, and doesn't do the rename.
+
+Future goals:
+
+  * Add checks for remote pull requests on master.
+
+CAT
+}
+
+## Toolkit of sixarm-unix-shell-functions
 
 out() { printf %s\\n "$*" ; }
 err() { >&2 printf %s\\n "$*" ; }
 die() { >&2 printf %s\\n "$*" ; exit 1 ; }
 
-prompt_to_continue() {
+## Helper
+
+ask_to_continue() {
 	printf %s "Continue? (yes/no) "
-	read answer
-	if [ "$answer" == "${answer#[Yy]}" ]; then
+	read x
+	if [ "$x" == "${x#[Yy]}" ]; then
 		die "Abort."
 	fi
 }
 
-out "This tool helps you use git to change your git repository"
-out "from the default branch name 'master' to a new name 'main'."
+## Do the branch rename step by step
 
-git show-ref --verify --quiet refs/heads/master
-if [ "$?" -ne 0 ]; then
-	err "This tool expects a git branch name 'master',"
-	err "but cannot find that branch name in your repo."
-	die "Abort."
+work() {
+
+	out "This tool helps you use git to change your git repository"
+	out "from the default branch name 'master' to a new name 'main'."
+
+	git show-ref --verify --quiet refs/heads/master
+	if [ "$?" -ne 0 ]; then
+		err "This tool expects a git branch name 'master',"
+		err "but cannot find that branch name in your repo."
+		die "Abort."
+	fi
+
+	git show-ref --verify --quiet refs/heads/main
+	if [ "$?" -eq 0 ]; then
+		err "This tool expects to create a git branch name 'main',"
+		err "but a branch name 'main' already exists in your repo."
+		die "Abort."
+	fi
+
+	out "This tool is ready to adjust your local master branch,"
+	out "by doing a reset via 'git reset --hard origin/master'."
+	ask_to_continue
+	git checkout master
+	git reset --hard origin/master
+
+	out "This tool is ready to rename the branch and push it."
+	ask_to_continue
+	git branch -m master main
+	git push -u origin main
+
+	out "Now you need to sign in to your upstream repository host,"
+	out "such as GitHub, GitLab, Bitbucket, CodeCommit, Azure, etc."
+	out "Use the host tools to change the default branch name."
+	out "You must do the change now, before you continue."
+	ask_to_continue
+
+	out "This tool is ready to delete your origin/master branch."
+	ask_to_continue
+	git push origin --delete master
+	git remote set-head origin -a
+
+	out "Success. Your default branch is renamed."
+	exit 0
+}
+
+if [ $# -eq 0 ]; then
+	work
 fi
 
-git show-ref --verify --quiet refs/heads/main
-if [ "$?" -eq 0 ]; then
-	err "This tool expects to create a git branch name 'main',"
-	err "but a branch name 'main' already exists in your repo."
-	die "Abort."
-fi
-
-out "This tool is ready to adjust your local master branch,"
-out "by doing a reset via 'git reset --hard origin/master'."
-prompt_to_continue
-git checkout master
-git reset --hard origin/master
-
-out "This tool is ready to rename the branch and push it."
-prompt_to_continue
-git branch -m master main
-git push -u origin main
-
-out "Now you need to sign in to your upstream repository host,"
-out "such as GitHub, GitLab, Bitbucket, CodeCommit, Azure, etc."
-out "Use the host tools to change the default branch name."
-out "You must do the change now, before you continue."
-prompt_to_continue
-
-out "This tool is ready to delete your origin/master branch."
-prompt_to_continue
-git push origin --delete master
-git remote set-head origin -a
-
-out "Success. Your default branch is renamed."
-exit 0
+while [ $# -gt 0 ]; do
+  case $1 in
+    -h | --help )
+      help
+      ;;
+    -V | --version )
+      out $program_variant
+      ;;
+    *)
+      break
+  esac
+  shift
+done

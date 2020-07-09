@@ -4,9 +4,9 @@
 ## Program tracking ##
 
 program_command="git-rename-master-branch-to-main"
-program_version="1.3.0"
+program_version="1.4.0"
 program_created="2020-06-28T05:13:28Z"
-program_updated="2020-07-09T17:24:54Z"
+program_updated="2020-07-09T22:33:31Z"
 program_license="GPL-2.0-only"
 program_contact="Joel Parker Henderson (joel@joelparkerhenderson.com)"
 program_variant="$program_command version $program_version updated $program_updated"
@@ -59,7 +59,7 @@ out() { printf %s\\n "$*" ; }
 err() { >&2 printf %s\\n "$*" ; }
 die() { >&2 printf %s\\n "$*" ; exit 1 ; }
 
-## Helper
+## Helpers
 
 ask_to_continue() {
 	printf %s "Continue? (yes/no) "
@@ -69,9 +69,66 @@ ask_to_continue() {
 	fi
 }
 
+rename_via_bitbucket() {
+	#TODO please write function akin to `rename_via_github`
+	return 0
+}
+
+rename_via_github() {
+
+	out "Do you want to change the default branch name at GitHub?"
+	read x
+	if [ "$x" != "${x#[Yy]}" ]; then
+		return 1
+	fi
+
+	out "Do you want to do the change by using the GitHub API?"
+	out "You will need your GitHub user name, GitHub repo name,"
+	out "and GitHub authorization token. If you don\'t know these,"
+	out "then skip this GitHub API step, and instead do it manually."
+	printf %s "Use the GitHub API now? (yes/no) "
+	read x
+	if [ "$x" != "${x#[Yy]}" ]; then
+		return 1
+	fi
+
+	out "What is your GitHub user name?"
+	user_name=$(ask)
+	if [ "$user_name" == "" ]; then
+		err "No answer, so skipping to the next step."
+		return 2
+	fi
+
+	out "What is your GitHub repo name?"
+	repo_name=$(ask)
+	if [ "$repo_name" == "" ]; then
+		err "No answer, so skipping to the next step."
+		return 3
+	fi
+
+	out "What is your GitHub authentication token?"
+	auth_token=$(ask)
+	if [ "$auth_token" == "" ]; then
+		err "No answer, so skipping to the next step."
+		return 4
+	fi
+
+	curl -X PATCH \
+	-H "Accept: application/vnd.github.v3+json" \
+	-H "Authorization: token $auth_token" \
+	"https://api.github.com/repos/$user_name/$repo_name" \
+	-d '{"default_branch": "main" }'
+	
+}
+
+rename_via_gitlab() {
+	#TODO please write function akin to `rename_via_github`
+	return 0
+}
+
 ## Do the branch rename step by step
 
-work() {
+rename() {
 
 	out "This tool helps you use git to change your git repository"
 	out "from the default branch name 'master' to a new name 'main'."
@@ -101,9 +158,13 @@ work() {
 	git branch -m master main
 	git push -u origin main
 
-	out "Now you need to sign in to your upstream repository host,"
-	out "such as GitHub, GitLab, Bitbucket, CodeCommit, Azure, etc."
-	out "Use the host tools to change the default branch name."
+	#TODO add more git hosting sites here
+	rename_via_bitbucket 
+	rename_via_github
+	rename_via_gitlab
+	
+	out "Now you need to manually sign in to each of your upstream hosts"
+	out "that still use the branch name 'master', and change it to 'main'."
 	out "You must do the change now, before you continue."
 	ask_to_continue
 
@@ -117,7 +178,7 @@ work() {
 }
 
 if [ $# -eq 0 ]; then
-	work
+	rename
 fi
 
 while [ $# -gt 0 ]; do

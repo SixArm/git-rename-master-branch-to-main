@@ -1,13 +1,16 @@
 #!/bin/sh
 #set -euf
 
+# Include https://github.com/SixArm/posix-shell-script-kit
+. "$(dirname "$(readlink -f "$0")")/posix-shell-script-kit"
+
 ## Program tracking ##
 
 program_command="git-rename-master-branch-to-main"
-program_version="1.4.0"
+program_version="1.4.1"
 program_created="2020-06-28T05:13:28Z"
-program_updated="2020-07-09T22:33:31Z"
-program_license="GPL-2.0-only"
+program_updated="2023-03-24T13:37:48Z"
+program_license="GPL-2.0 or GPL-3.0 or contact us for more"
 program_contact="Joel Parker Henderson (joel@joelparkerhenderson.com)"
 program_variant="$program_command version $program_version updated $program_updated"
 
@@ -52,12 +55,6 @@ Future goals:
 
 CAT
 }
-
-## Toolkit of sixarm-unix-shell-functions
-
-out() { printf %s\\n "$*" ; }
-err() { >&2 printf %s\\n "$*" ; }
-die() { >&2 printf %s\\n "$*" ; exit 1 ; }
 
 ## Helpers
 
